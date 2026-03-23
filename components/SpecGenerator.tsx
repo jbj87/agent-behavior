@@ -11,6 +11,25 @@ import SpecSkeleton from "@/components/SpecSkeleton";
 
 const MIN_INPUT_LENGTH = 20;
 
+const SPEC_SECTIONS = [
+  { id: "core-capabilities", title: "CORE CAPABILITIES", pattern: /## CORE CAPABILITIES\n([\s\S]*?)(?=\n## |$)/ },
+  { id: "quality-boundaries", title: "QUALITY BOUNDARIES", pattern: /## QUALITY BOUNDARIES\n([\s\S]*?)(?=\n## |$)/ },
+  { id: "error-handling", title: "ERROR HANDLING BEHAVIOR", pattern: /## ERROR HANDLING BEHAVIOR\n([\s\S]*?)(?=\n## |$)/ },
+  { id: "learning-boundaries", title: "LEARNING BOUNDARIES", pattern: /## LEARNING BOUNDARIES\n([\s\S]*?)(?=\n## |$)/ },
+  { id: "edge-cases", title: "EDGE CASE HANDLING", pattern: /## EDGE CASE HANDLING\n([\s\S]*?)(?=\n## |$)/ },
+  { id: "success-metrics", title: "SUCCESS METRICS", pattern: /## SUCCESS METRICS\n([\s\S]*?)(?=\n## |$)/ },
+];
+
+function parseSpecSections(spec: string) {
+  return SPEC_SECTIONS.map((section) => {
+    const match = spec.match(section.pattern);
+    return {
+      ...section,
+      content: match ? match[1].trim() : null,
+    };
+  });
+}
+
 const QUICK_START_TEMPLATES = [
   {
     label: "Hotel concierge",
@@ -180,7 +199,7 @@ export default function SpecGenerator() {
         </div>
 
         {/* Content Area */}
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {error ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-destructive/30 bg-destructive/10 p-6">
               <p className="text-center text-sm text-destructive" role="alert">
@@ -193,9 +212,7 @@ export default function SpecGenerator() {
           ) : isGenerating ? (
             <SpecSkeleton />
           ) : generatedSpec ? (
-            <div className="flex-1 overflow-auto rounded-lg bg-muted p-6 text-sm">
-              <MarkdownRenderer content={generatedSpec} />
-            </div>
+            <SpecCards spec={generatedSpec} />
           ) : (
             <EmptyState />
           )}
@@ -205,27 +222,53 @@ export default function SpecGenerator() {
   );
 }
 
+function SpecCards({ spec }: { spec: string }) {
+  const sections = parseSpecSections(spec);
+
+  return (
+    <div className="flex flex-1 flex-col gap-4 overflow-auto">
+      <div className="grid gap-4 md:grid-cols-2">
+        {sections.map((section) => (
+          <div
+            key={section.id}
+            className="flex flex-col rounded-lg border border-border bg-muted/50 p-4"
+          >
+            <h3 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-primary">
+              {section.title}
+            </h3>
+            <div className="flex-1 text-sm text-foreground/90">
+              {section.content ? (
+                <MarkdownRenderer content={section.content} />
+              ) : (
+                <p className="italic text-muted-foreground">
+                  No content available
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-8">
+    <div className="flex flex-1 flex-col gap-6">
       {/* Placeholder Cards */}
-      <div className="grid w-full max-w-lg grid-cols-2 gap-4">
-        {[
-          "CORE CAPABILITIES",
-          "QUALITY BOUNDARIES",
-          "ERROR HANDLING",
-          "SUCCESS METRICS",
-        ].map((title) => (
+      <div className="grid flex-1 gap-4 md:grid-cols-2">
+        {SPEC_SECTIONS.map((section) => (
           <div
-            key={title}
-            className="flex h-24 flex-col justify-between rounded-lg border border-border bg-card p-4"
+            key={section.id}
+            className="flex flex-col rounded-lg border border-border bg-muted/30 p-4"
           >
-            <span className="font-mono text-xs font-medium tracking-wider text-muted-foreground">
-              {title}
+            <span className="mb-3 font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {section.title}
             </span>
-            <div className="space-y-1.5">
-              <div className="h-2 w-3/4 rounded bg-border" />
-              <div className="h-2 w-1/2 rounded bg-border" />
+            <div className="flex-1 space-y-2">
+              <div className="h-2 w-4/5 rounded bg-border/50" />
+              <div className="h-2 w-3/5 rounded bg-border/50" />
+              <div className="h-2 w-2/3 rounded bg-border/50" />
             </div>
           </div>
         ))}
@@ -234,10 +277,8 @@ function EmptyState() {
       {/* Helper Text */}
       <div className="text-center">
         <p className="text-sm text-muted-foreground">
-          Describe your agent on the left and click
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Generate to build a structured behavior spec.
+          Describe your agent on the left and click Generate to build a
+          structured behavior spec.
         </p>
       </div>
     </div>
