@@ -1,6 +1,5 @@
 import Header from "@/components/Header";
 import SpecGenerator from "@/components/SpecGenerator";
-import Footer from "@/components/Footer";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function Home() {
@@ -12,7 +11,6 @@ export default function Home() {
           <SpecGenerator />
         </ErrorBoundary>
       </main>
-      <Footer />
     </>
   );
 }
